@@ -9,6 +9,9 @@ from langchain.document_loaders import UnstructuredURLLoader
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 
+import google.generativeai as genai
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
 from dotenv import load_dotenv
 load_dotenv()  # take environment variables from .env (especially openai api key)
 
@@ -24,7 +27,7 @@ process_url_clicked = st.sidebar.button("Process URLs")
 file_path = "faiss_store_openai.pkl"
 
 main_placeholder = st.empty()
-llm = OpenAI(temperature=0.9, max_tokens=500)
+# llm = OpenAI(temperature=0.9, max_tokens=500)
 
 if process_url_clicked:
     # load data
@@ -39,7 +42,8 @@ if process_url_clicked:
     main_placeholder.text("Text Splitter...Started...✅✅✅")
     docs = text_splitter.split_documents(data)
     # create embeddings and save it to FAISS index
-    embeddings = OpenAIEmbeddings()
+    # embeddings = OpenAIEmbeddings()
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
     vectorstore_openai = FAISS.from_documents(docs, embeddings)
     main_placeholder.text("Embedding Vector Started Building...✅✅✅")
     time.sleep(2)
@@ -53,7 +57,10 @@ if query:
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
             vectorstore = pickle.load(f)
-            chain = RetrievalQAWithSourcesChain.from_llm(llm=llm, retriever=vectorstore.as_retriever())
+            chain = RetrievalQAWithSourcesChain.from_llm(
+                llm=llm,
+                retriever=vectorstore.as_retriever()
+                )
             result = chain({"question": query}, return_only_outputs=True)
             # result will be a dictionary of this format --> {"answer": "", "sources": [] }
             st.header("Answer")
