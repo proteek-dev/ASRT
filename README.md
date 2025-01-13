@@ -191,5 +191,3 @@ def process_urls(url_list):
 ```
 
 ---
-
-This README should guide users and developers through setting up, running, and understanding the Automated Scheme Research Tool. Let me know if additional details are needed!
