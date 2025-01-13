@@ -18,7 +18,9 @@ embeddings, qa_pipeline = load_models()
 
 # Sidebar for input
 st.sidebar.title("Scheme Research Tool")
-st.sidebar.markdown("**Instructions:**\n- Enter URLs or upload a text file containing URLs.\n- Click `Process URLs` to analyze.\n- Interact with the bot in the chat area.")
+st.sidebar.markdown("**Instructions:**\n- Enter URLs or upload a text \
+                    file containing URLs.\n- Click `Process URLs` \
+                    to analyze.\n- Interact with the bot in the chat area.")
 
 # URL Input Section
 urls = st.sidebar.text_area("Enter URLs (one per line):")
@@ -34,7 +36,8 @@ process_button = st.sidebar.button("Process URLs")
 st.title("Automated Scheme Research Tool")
 st.markdown(
     """
-    This chatbot allows you to interact with government scheme articles based on key aspects:
+    This chatbot allows you to interact with government scheme \
+    articles based on key aspects:
     - Scheme Benefits
     - Application Process
     - Eligibility
@@ -89,7 +92,8 @@ if process_button:
     if url_list:
         process_urls(url_list)
     else:
-        st.error("No URLs provided. Please enter URLs or upload a valid text file.")
+        st.error("No URLs provided. Please enter URLs or \
+                 upload a valid text file.")
 
 # Load FAISS Index from File
 def load_faiss_index():
@@ -112,11 +116,25 @@ if st.button("Send", key="send_query") and vectorstore and query:
     # Search the FAISS vector store
     result = vectorstore.similarity_search(query, k=1)
     if result:
-        context = result[0].page_content
+        relevant_doc = result[0]
+        context = relevant_doc.page_content
         answer = qa_pipeline(question=query, context=context)
-        st.session_state.chat_history.append({"user": query, "bot": answer['answer']})
+
+        # Generate a short summary (first 200 characters) of the article
+        summary = context[:200] + "..." if len(context) > 200 else context
+
+        # Append response to chat history
+        st.session_state.chat_history.append({
+            "user": query,
+            "bot": f"**Answer:** {answer['answer']}\n\n\
+            **Source URL:** {relevant_doc.metadata.get('source', 'N/A')}\n\n\
+            **Summary:** {summary}"
+        })
     else:
-        st.session_state.chat_history.append({"user": query, "bot": "I'm sorry, I couldn't find any relevant information."})
+        st.session_state.chat_history.append({
+            "user": query,
+            "bot": "I'm sorry, I couldn't find any relevant information."
+        })
 
 # Display Conversation History
 for chat in st.session_state.chat_history:
